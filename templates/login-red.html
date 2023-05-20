@@ -1,0 +1,157 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel = "stylesheet" href = "{%static 'login-red.css'%}"> 
+
+    <title>Hello, world!</title>
+  </head>
+  <body>
+
+    <div id="contentarea">
+      <figure>
+      <div class="camera">
+          <video id="video">Video stream not available.</video>
+      </div>
+      
+      <canvas id="canvas"></canvas>
+      <div class="output">
+          <img id="photo" alt="The screen capture will appear in this box."> 
+      </div>
+      </figure>
+    </div>
+
+    <div><button id="startbutton">Take photo</button></div>
+
+
+    <form action="/login" method="post" id = "myForm">
+    {% csrf_token %}
+
+    <div class="container">
+        <label for="username"><b>Username</b></label>
+        <input type="text" placeholder="Enter Username" name="username" required>
+
+        <label for="psw"><b>Password</b></label>
+        <input type="password" placeholder="Enter Password" name="psw" required>
+
+        <button type="submit">Login</button>
+
+        <label>
+        <input type="checkbox" checked="checked" name="remember"> Remember me
+        </label>
+
+        <label for="input_face"></label>
+        <input type="hidden" accept="image/png" name="input_face" id="input_face">
+    </div>
+
+    <div class="container" style="background-color:#f1f1f1">
+        <button type="button" class="cancelbtn">Cancel</button>
+        <span class="psw">Forgot <a href="#">password?</a></span>
+    </div>
+    </form>
+
+
+
+
+    <script>
+      /* JS comes here */
+      (function() {
+
+          var width = 320; // We will scale the photo width to this
+          var height = 0; // This will be computed based on the input stream
+
+          var streaming = false;
+
+          var video = null;
+          var canvas = null;
+          var photo = null;
+          var startbutton = null;
+
+          function startup() {
+              video = document.getElementById('video');
+              canvas = document.getElementById('canvas');
+              photo = document.getElementById('photo');
+              startbutton = document.getElementById('startbutton');
+
+              navigator.mediaDevices.getUserMedia({
+                      video: true,
+                      audio: false
+                  })
+                  .then(function(stream) {
+                      video.srcObject = stream;
+                      video.play();
+                  })
+                  .catch(function(err) {
+                      console.log("An error occurred: " + err);
+                  });
+
+              video.addEventListener('canplay', function(ev) {
+                  if (!streaming) {
+                      height = video.videoHeight / (video.videoWidth / width);
+
+                      if (isNaN(height)) {
+                          height = width / (4 / 3);
+                      }
+
+                      video.setAttribute('width', width);
+                      video.setAttribute('height', height);
+                      canvas.setAttribute('width', width);
+                      canvas.setAttribute('height', height);
+                      streaming = true;
+                  }
+              }, false);
+
+              startbutton.addEventListener('click', function(ev) {
+                  video.srcObject.getVideoTracks().forEach(track => track.stop());
+                  takepicture();
+                  ev.preventDefault();
+              }, false);
+
+              clearphoto();
+          }
+
+
+          function clearphoto() {
+              var context = canvas.getContext('2d');
+              context.fillStyle = "#AAA";
+              context.fillRect(0, 0, canvas.width, canvas.height);
+
+              var data = canvas.toDataURL('image/png');
+              photo.setAttribute('src', data);
+          }
+
+          function takepicture() {
+              var context = canvas.getContext('2d');
+              if (width && height) {
+                  canvas.width = width;
+                  canvas.height = height;
+                  context.drawImage(video, 0, 0, width, height);
+
+                  var data = canvas.toDataURL('image/png');
+                  photo.setAttribute('src', data);
+                  var inp = canvas.toDataURL("image/png").split(';base64,')[1];
+                  document.getElementById("input_face").setAttribute('value', inp);
+                  document.getElementById("myForm").submit();
+              } else {
+                  clearphoto();
+              }
+          }
+
+          window.addEventListener('load', startup, false);
+      })();
+    </script>
+
+
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  </body>
+</html>

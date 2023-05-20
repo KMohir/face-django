@@ -1,0 +1,153 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel = "stylesheet" href = "{%static 'login.css'%}"> 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <title>Hello, world!</title>
+  </head>
+  <body class="text-center" >
+
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="close" data-dismiss="alert" aria-label="Close" >
+        <span aria-hidden="true">&times;</span>
+      </button>
+      </div>
+    {% endfor %}
+    {% endif %} 
+
+    <form id = "myForm" class="form-signin" action="/login" method="post" autocomplete = "off">
+      {% csrf_token %}
+      <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+      <label for="username" class="sr-only">Username</label>
+      <input type="text" id="username" name = "username" class="form-control" placeholder="Username" required autofocus>
+      <div class="checkbox mb-3">
+        <a href = "/sign_up">Haven't Registered?</a>
+      </div>
+      <label for="input_face"></label>
+      <input type="hidden" accept="image/png" name="input_face" id="input_face">
+      {% comment %} <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button> {% endcomment %}
+      <div class = "wrapper">
+        <div class = "cam" id = "cam1">
+        <video id="video">Video stream not available.</video>      
+        <button class="btn btn-lg btn-primary btn-block" id = "startbutton">Sign in</button>
+        </div>
+        <div id = "pasw1" >
+        <label for="psw" class="sr-only">Password</label>
+        <input type="password" id="psw" name = "psw" class="form-control" placeholder="Password" required>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        </div>
+      </div>
+    <a href="#" class="btn1">Want to login using password instead?</a>
+    
+    </form>
+    
+
+
+    <script>
+
+
+      $(document).ready(function(){
+        $("a.btn1").click(function(){
+          $("#pasw1").toggle();
+          $(".cam").toggle();
+        });
+      });
+    
+
+      /* JS comes here */
+      (function() {
+
+          var width = 300; // We will scale the photo width to this
+          var height = 0; // This will be computed based on the input stream
+
+          var streaming = false;
+
+          var video = null;
+          var canvas = document.createElement('canvas');
+          var startbutton = null;
+
+          function startup() {
+              video = document.getElementById('video');
+              startbutton = document.getElementById('startbutton');
+
+              navigator.mediaDevices.getUserMedia({
+                      video: true,
+                      audio: false
+                  })
+                  .then(function(stream) {
+                      video.srcObject = stream;
+                      video.play();
+                  })
+                  .catch(function(err) {
+                      console.log("An error occurred: " + err);
+                  });
+
+              video.addEventListener('canplay', function(ev) {
+                  if (!streaming) {
+                      height = video.videoHeight / (video.videoWidth / width);
+
+                      if (isNaN(height)) {
+                          height = width / (4 / 3);
+                      }
+
+                      video.setAttribute('width', width);
+                      video.setAttribute('height', height);
+                      canvas.setAttribute('width', width);
+                      canvas.setAttribute('height', height);
+                      streaming = true;
+                  }
+              }, false);
+
+              startbutton.addEventListener('click', function(ev) {
+                  takepicture();
+                  ev.preventDefault();
+              }, false);
+
+              clearphoto();
+          }
+
+
+          function clearphoto() {
+              var context = canvas.getContext('2d');
+              context.fillStyle = "#AAA";
+              context.fillRect(0, 0, canvas.width, canvas.height);
+              var data = canvas.toDataURL('image/png');
+          }
+
+          function takepicture() {
+              var context = canvas.getContext('2d');
+              if (width && height) {
+                  canvas.width = width;
+                  canvas.height = height;
+                  context.drawImage(video, 0, 0, width, height);
+
+                  var data = canvas.toDataURL('image/png');
+                  var inp = canvas.toDataURL("image/png").split(';base64,')[1];
+                  document.getElementById("input_face").setAttribute('value', inp);
+                  document.getElementById("myForm").submit();
+              } else {
+                  clearphoto();
+              }
+          }
+
+          window.addEventListener('load', startup, false);
+      })();
+    </script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  </body>
+</html>
